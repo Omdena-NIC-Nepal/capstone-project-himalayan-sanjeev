@@ -316,54 +316,34 @@ def load_enhanced_data():
 # Load prediction models with error handling
 @st.cache_resource
 def load_prediction_models():
+    import os
+    import pickle
+
     try:
-        # Get the directory where the script is running
-        import os
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        
-        # Try different possible paths for the models
-        possible_paths = [
-            os.path.join(script_dir, 'models'),
-            os.path.join(script_dir, '..', 'models'),
-            'models',
-            './models'
-        ]
-        
-        temp_model = None
-        precip_model = None
-        
-        for models_dir in possible_paths:
-            temp_model_path = os.path.join(models_dir, 'temperature_model.pkl')
-            precip_model_path = os.path.join(models_dir, 'precipitation_model.pkl')
-            
-            if os.path.exists(temp_model_path) and os.path.exists(precip_model_path):
-                print(f"Found models in: {models_dir}")
-                
-                with open(temp_model_path, 'rb') as f:
-                    temp_model = pickle.load(f)
-                with open(precip_model_path, 'rb') as f:
-                    precip_model = pickle.load(f)
-                
-                return temp_model, precip_model, None
-        
-        # If we get here, models weren't found
-        error_msg = f"Model files not found in any of these directories: {possible_paths}"
-        print(error_msg)
-        
-        # List files in current directory for debugging
-        current_files = os.listdir('.')
-        print(f"Files in current directory: {current_files}")
-        
-        if 'models' in current_files:
-            model_files = os.listdir('models')
-            print(f"Files in models directory: {model_files}")
-        
-        return None, None, error_msg
-        
+        models_dir = os.path.join(script_dir, 'models')
+
+        temp_model_path = os.path.join(models_dir, 'temperature_model.pkl')
+        precip_model_path = os.path.join(models_dir, 'precipitation_model.pkl')
+
+        if os.path.exists(temp_model_path) and os.path.exists(precip_model_path):
+            with open(temp_model_path, 'rb') as f:
+                temp_model = pickle.load(f)
+            with open(precip_model_path, 'rb') as f:
+                precip_model = pickle.load(f)
+
+            return temp_model, precip_model, None
+
+        else:
+            error_msg = f"""Model files not found at expected path: {models_dir}
+Files in models/: {os.listdir(models_dir) if os.path.exists(models_dir) else 'models/ folder not found'}
+"""
+            return None, None, error_msg
+
     except Exception as e:
-        error_msg = f"Error loading models: {str(e)}"
-        print(error_msg)
+        error_msg = f"Exception while loading models: {str(e)}"
         return None, None, error_msg
+
 
 # Function to apply region filters
 def filter_by_region(df, region_name):
